@@ -1,0 +1,16 @@
+# Open redis-cli and run these commands one by one.
+
+PING
+
+SET lesson:2 "Build Your Database"
+GET lesson:2
+
+HSET learner:1 name "Pranava" topic "Redis" lesson 2
+HGETALL learner:1
+
+SET otp:learner:1 "482911" EX 60
+TTL otp:learner:1
+
+EXISTS lesson:2
+DEL lesson:2
+EXISTS lesson:2
