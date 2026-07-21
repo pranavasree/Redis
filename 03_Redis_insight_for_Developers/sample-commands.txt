@@ -1,0 +1,21 @@
+PING
+
+SET lesson:3 "Redis Insight for Developers"
+GET lesson:3
+TYPE lesson:3
+TTL lesson:3
+
+HSET developer:101 name "Pranava" focus "Java Backend" tool "Redis Insight"
+HGETALL developer:101
+
+LPUSH learning:topics "Browser" "CLI" "Workbench" "Profiler"
+LRANGE learning:topics 0 -1
+
+SADD backend:skills "Java" "Spring Boot" "Redis" "Kafka"
+SMEMBERS backend:skills
+
+ZADD learning:progress 25 "Redis Basics" 50 "Database Setup" 75 "Redis Insight"
+ZREVRANGE learning:progress 0 -1 WITHSCORES
+
+SET otp:developer:101 "482911" EX 60
+TTL otp:developer:101

@@ -1,0 +1,16 @@
+README.md
+docker-compose.yml
+images/00-cover.png
+images/01-learning-objectives.png
+images/02-what-is-redis-insight.png
+images/03-install-options.png
+images/04-cloud-connection-flow.png
+images/05-manual-connection.png
+images/06-load-sample-data.png
+images/07-feature-map.png
+images/08-browser-keys.png
+images/09-cli-workbench.png
+images/10-profiler-safety.png
+images/11-practice-lab.png
+images/12-key-takeaways.png
+sample-commands.txt
