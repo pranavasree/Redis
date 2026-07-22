@@ -1,0 +1,56 @@
+# Redis Learning Journey
+# Lesson 4: Explore Keys, Values, and Strings
+#
+# Run these commands in the Redis Insight CLI.
+# Lines beginning with # are comments and should not be entered.
+
+# 0. Check the connection
+PING
+
+# 1. Create a string key
+SET color red
+
+# 2. Read the value
+GET color
+
+# 3. Update the same key
+SET color green
+
+# 4. Confirm the update
+GET color
+
+# 5. Remove the key asynchronously
+UNLINK color
+
+# 6. Try removing it again
+UNLINK color
+
+# Additional practice
+
+# Use a meaningful, namespaced key
+SET user:101:name "Hero"
+GET user:101:name
+
+# Store and update a number using string commands
+SET page:views 10
+INCR page:views
+INCRBY page:views 5
+DECR page:views
+GET page:views
+
+# Store a temporary OTP for 60 seconds
+SET otp:user:101 "482911" EX 60
+TTL otp:user:101
+
+# Set multiple strings
+MSET app:name "Redis Learning Journey" app:lesson "4"
+MGET app:name app:lesson
+
+# String length and append
+SET greeting "Hello"
+APPEND greeting " Redis"
+GET greeting
+STRLEN greeting
+
+# Clean up the practice keys
+UNLINK user:101:name page:views otp:user:101 app:name app:lesson greeting
