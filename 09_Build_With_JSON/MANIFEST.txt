@@ -1,0 +1,13 @@
+README.md
+lesson-09-lab-commands.txt
+lesson-09-expected-results.md
+MANIFEST.txt
+images/00-cover-build-with-json.png
+images/01-learning-objectives.png
+images/02-json-serialized-string.png
+images/03-json-document.png
+images/04-json-document-advantages.png
+images/05-other-json-commands.png
+images/06-json-use-cases.png
+images/07-json-index-and-search.png
+images/08-key-takeaways.png

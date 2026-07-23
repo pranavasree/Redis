@@ -1,0 +1,104 @@
+# Redis Learning Journey
+# Lesson 9: Build with JSON
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+# JSON values must be valid JSON.
+
+# ------------------------------------------------------------
+# 0. Verify the connection and JSON support
+# ------------------------------------------------------------
+PING
+COMMAND INFO JSON.SET
+
+# ------------------------------------------------------------
+# 1. Start with a clean key
+# ------------------------------------------------------------
+UNLINK product:bowtie42
+
+# ------------------------------------------------------------
+# 2. Create the JSON document
+# ------------------------------------------------------------
+JSON.SET product:bowtie42 $ '{ "sku": "BOWTIE42", "name": "Awesome Bowtie", "colors": [ "red", "green", "blue" ], "description": "This awesome bowtie is awesome.", "quantity": 23, "onsale": false }'
+
+# ------------------------------------------------------------
+# 3. Read the complete document
+# ------------------------------------------------------------
+JSON.GET product:bowtie42
+JSON.GET product:bowtie42 $
+
+# Pretty-print the root document in redis-cli
+JSON.GET product:bowtie42 INDENT "  " NEWLINE "\n" SPACE " " $
+
+# ------------------------------------------------------------
+# 4. Read selected values with JSONPath
+# ------------------------------------------------------------
+JSON.GET product:bowtie42 $.quantity
+JSON.GET product:bowtie42 $.name
+JSON.GET product:bowtie42 $.colors
+JSON.GET product:bowtie42 $.*
+
+# Check JSON value types
+JSON.TYPE product:bowtie42 $
+JSON.TYPE product:bowtie42 $.quantity
+JSON.TYPE product:bowtie42 $.colors
+JSON.TYPE product:bowtie42 $.onsale
+
+# ------------------------------------------------------------
+# 5. Update typed values
+# ------------------------------------------------------------
+JSON.SET product:bowtie42 $.onsale true
+JSON.SET product:bowtie42 $.price 9.99
+JSON.SET product:bowtie42 $.name '"Striped Bowtie"'
+
+JSON.GET product:bowtie42 $.onsale
+JSON.GET product:bowtie42 $.price
+JSON.GET product:bowtie42 $.name
+
+# ------------------------------------------------------------
+# 6. Manipulate numbers, strings, arrays, and booleans
+# ------------------------------------------------------------
+JSON.NUMINCRBY product:bowtie42 $.quantity 2
+JSON.STRLEN product:bowtie42 $.name
+JSON.ARRAPPEND product:bowtie42 $.colors '"yellow"'
+JSON.ARRLEN product:bowtie42 $.colors
+JSON.TOGGLE product:bowtie42 $.onsale
+
+# ------------------------------------------------------------
+# 7. Remove the colors field
+# ------------------------------------------------------------
+JSON.DEL product:bowtie42 $.colors
+JSON.GET product:bowtie42 $
+
+# Removing it again returns 0
+JSON.DEL product:bowtie42 $.colors
+
+# ------------------------------------------------------------
+# 8. Add nested data
+# ------------------------------------------------------------
+JSON.SET product:bowtie42 $.inventory '{ "warehouse": "OH-1", "available": true }'
+JSON.GET product:bowtie42 $.inventory
+JSON.GET product:bowtie42 $.inventory.warehouse
+
+# ------------------------------------------------------------
+# 9. Work with multiple JSON documents
+# ------------------------------------------------------------
+UNLINK product:bowtie43 product:bowtie44
+JSON.MSET product:bowtie43 $ '{ "sku": "BOWTIE43", "quantity": 10 }' product:bowtie44 $ '{ "sku": "BOWTIE44", "quantity": 8 }'
+JSON.MGET product:bowtie42 product:bowtie43 product:bowtie44 $.quantity
+
+# ------------------------------------------------------------
+# 10. Add key-level expiration for cached JSON
+# ------------------------------------------------------------
+EXPIRE product:bowtie42 3600
+TTL product:bowtie42
+PERSIST product:bowtie42
+
+# ------------------------------------------------------------
+# 11. Final inspection
+# ------------------------------------------------------------
+JSON.GET product:bowtie42 INDENT "  " NEWLINE "\n" SPACE " " $
+
+# ------------------------------------------------------------
+# 12. Clean up
+# ------------------------------------------------------------
+UNLINK product:bowtie42 product:bowtie43 product:bowtie44
