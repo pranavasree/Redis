@@ -1,0 +1,204 @@
+# Redis Learning Journey
+# Lesson 10: Explore More Redis Data Structures
+#
+# Run each section independently in Redis Insight CLI or redis-cli.
+# Some advanced commands depend on the capabilities enabled in your Redis deployment.
+# Use COMMAND INFO before a section to verify support.
+
+# ============================================================
+# 0. Verify connection
+# ============================================================
+PING
+
+# ============================================================
+# 1. HyperLogLog: approximate unique counts
+# ============================================================
+UNLINK visitors:day1 visitors:day2 visitors:all
+
+PFADD visitors:day1 alice bob chuck alice bob
+PFCOUNT visitors:day1
+
+PFADD visitors:day2 bob dave emma
+PFCOUNT visitors:day2
+
+PFMERGE visitors:all visitors:day1 visitors:day2
+PFCOUNT visitors:all
+
+# ============================================================
+# 2. Bloom filter: probabilistic membership
+# Requires Bloom filter command support.
+# ============================================================
+COMMAND INFO BF.RESERVE
+UNLINK usernames:bloom
+
+BF.RESERVE usernames:bloom 0.01 1000
+BF.ADD usernames:bloom alice
+BF.ADD usernames:bloom bob
+BF.ADD usernames:bloom alice
+
+BF.EXISTS usernames:bloom alice
+BF.EXISTS usernames:bloom linda
+BF.MEXISTS usernames:bloom alice bob linda
+
+# ============================================================
+# 3. Redis Streams: chronological events
+# ============================================================
+UNLINK clickstream:bowtie
+
+XADD clickstream:bowtie * username alice sessionId abc123 clickId click456
+XADD clickstream:bowtie * username alice sessionId abc123 clickId click789
+XADD clickstream:bowtie * username bob sessionId jkl012 clickId click202
+
+XLEN clickstream:bowtie
+XRANGE clickstream:bowtie - +
+XREVRANGE clickstream:bowtie + - COUNT 2
+XREAD COUNT 2 STREAMS clickstream:bowtie 0-0
+
+# Keep approximately the latest 1000 entries in a real stream:
+# XADD clickstream:bowtie MAXLEN ~ 1000 * username alice clickId click999
+
+# Consumer-group outline:
+# XGROUP CREATE clickstream:bowtie analytics 0 MKSTREAM
+# XREADGROUP GROUP analytics consumer-1 COUNT 2 STREAMS clickstream:bowtie >
+# XACK clickstream:bowtie analytics <ENTRY_ID>
+
+# ============================================================
+# 4. Geospatial index: store and search locations
+# Longitude must come before latitude.
+# ============================================================
+UNLINK bowtie:stores
+
+GEOADD bowtie:stores -104.9903 39.7392 denver
+GEOADD bowtie:stores -74.0060 40.7128 new-york-city
+GEOADD bowtie:stores -80.1373 26.1224 ft-lauderdale
+
+GEOPOS bowtie:stores denver new-york-city ft-lauderdale
+GEODIST bowtie:stores new-york-city ft-lauderdale KM
+
+GEOSEARCH bowtie:stores   FROMLONLAT -74.0060 40.7128   BYRADIUS 2000 KM   ASC WITHDIST WITHCOORD
+
+# ============================================================
+# 5. Bitmaps: compact yes/no flags
+# ============================================================
+UNLINK active:users:2026-07-22 active:users:2026-07-23 active:users:two-days
+
+SETBIT active:users:2026-07-22 101 1
+SETBIT active:users:2026-07-22 205 1
+SETBIT active:users:2026-07-22 999 1
+
+GETBIT active:users:2026-07-22 101
+GETBIT active:users:2026-07-22 500
+BITCOUNT active:users:2026-07-22
+
+SETBIT active:users:2026-07-23 205 1
+SETBIT active:users:2026-07-23 500 1
+
+BITOP OR active:users:two-days active:users:2026-07-22 active:users:2026-07-23
+BITCOUNT active:users:two-days
+
+# ============================================================
+# 6. Bitfields: packed integer fields
+# ============================================================
+UNLINK bike:1:metrics temperature:store-1
+
+# Two unsigned 16-bit values:
+# index 0 = price, index 1 = number of owners
+BITFIELD bike:1:metrics   SET u16 #0 1000   SET u16 #1 0
+
+BITFIELD_RO bike:1:metrics   GET u16 #0   GET u16 #1
+
+BITFIELD bike:1:metrics   INCRBY u16 #1 1   GET u16 #1
+
+# Saturate rather than wrap on overflow:
+BITFIELD bike:1:metrics   OVERFLOW SAT   INCRBY u16 #0 70000
+
+# ============================================================
+# 7. Other probabilistic structures
+# These sections require their respective command support.
+# ============================================================
+
+# 7A. Cuckoo filter: membership with deletion
+COMMAND INFO CF.RESERVE
+UNLINK processed:events:cf
+
+CF.RESERVE processed:events:cf 1000
+CF.ADD processed:events:cf event-101
+CF.ADD processed:events:cf event-102
+CF.EXISTS processed:events:cf event-101
+CF.EXISTS processed:events:cf event-999
+CF.DEL processed:events:cf event-101
+CF.EXISTS processed:events:cf event-101
+
+# 7B. Count-Min Sketch: estimated frequencies
+COMMAND INFO CMS.INITBYPROB
+UNLINK events:frequency
+
+CMS.INITBYPROB events:frequency 0.001 0.01
+CMS.INCRBY events:frequency click 10 purchase 2 search 5
+CMS.QUERY events:frequency click purchase search missing
+
+# 7C. Top-K: most frequent items
+COMMAND INFO TOPK.RESERVE
+UNLINK trending:terms
+
+TOPK.RESERVE trending:terms 3
+TOPK.ADD trending:terms redis kafka redis spring redis kafka rabbitmq
+TOPK.LIST trending:terms WITHCOUNT
+
+# 7D. t-digest: percentile estimates
+COMMAND INFO TDIGEST.CREATE
+UNLINK api:latency
+
+TDIGEST.CREATE api:latency
+TDIGEST.ADD api:latency 10 12 15 18 20 25 30 40 80 120
+TDIGEST.QUANTILE api:latency 0.5 0.95
+TDIGEST.MIN api:latency
+TDIGEST.MAX api:latency
+
+# ============================================================
+# 8. Time series: timestamped numeric measurements
+# Requires TimeSeries command support.
+# ============================================================
+COMMAND INFO TS.ADD
+UNLINK temperature:store-1
+
+TS.ADD temperature:store-1 1000 21.5
+TS.ADD temperature:store-1 2000 22.1
+TS.ADD temperature:store-1 3000 23.0
+TS.GET temperature:store-1
+TS.RANGE temperature:store-1 - +
+
+# ============================================================
+# 9. Vector search support check and command outline
+# Vectors are binary float arrays, so create/query blobs in an app.
+# ============================================================
+COMMAND INFO FT.CREATE
+COMMAND INFO FT.SEARCH
+
+# Example index schema (do not run until your deployment supports it
+# and DIM matches your embedding model):
+#
+# FT.CREATE idx:products ON HASH PREFIX 1 product: SCHEMA
+#   description TEXT
+#   price NUMERIC
+#   embedding VECTOR HNSW 6 TYPE FLOAT32 DIM 4 DISTANCE_METRIC COSINE
+#
+# Store a document:
+# HSET product:42 description "Blue silk blend bow tie" price 30 embedding <FLOAT32_BINARY_BLOB>
+#
+# Query nearest neighbors:
+# FT.SEARCH idx:products
+#   "*=>[KNN 3 @embedding $query_vector AS vector_distance]"
+#   PARAMS 2 query_vector <FLOAT32_BINARY_BLOB>
+#   SORTBY vector_distance
+#   RETURN 3 description price vector_distance
+#   DIALECT 2
+
+# ============================================================
+# 10. Clean up core examples
+# ============================================================
+UNLINK visitors:day1 visitors:day2 visitors:all
+UNLINK clickstream:bowtie bowtie:stores
+UNLINK active:users:2026-07-22 active:users:2026-07-23 active:users:two-days
+UNLINK bike:1:metrics temperature:store-1
+UNLINK usernames:bloom processed:events:cf events:frequency trending:terms api:latency

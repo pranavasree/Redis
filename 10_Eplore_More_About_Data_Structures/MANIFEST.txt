@@ -1,0 +1,17 @@
+README.md
+lesson-10-lab-commands.txt
+lesson-10-expected-results.md
+MANIFEST.txt
+images/00-cover-explore-more-data-structures.png
+images/01-learning-objectives.png
+images/02-redis-data-structures-overview.png
+images/03-probabilistic-data-structure.png
+images/04-hyperloglog.png
+images/05-bloom-filter.png
+images/06-redis-streams.png
+images/07-geospatial-index.png
+images/08-storing-vectors-options.png
+images/09-vector-use-cases.png
+images/10-vector-search.png
+images/11-even-more-data-structures.png
+images/12-key-takeaways.png
