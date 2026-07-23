@@ -1,0 +1,86 @@
+# Redis Learning Journey
+# Lesson 6: Build with Sets
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+
+# Verify the connection
+PING
+
+# ------------------------------------------------------------
+# 1. Create a set of users who viewed product bowtie42
+# ------------------------------------------------------------
+UNLINK product:views:bowtie42
+
+SADD product:views:bowtie42 alice bob chuck dave
+
+# Adding existing members again returns 0 because sets are unique.
+SADD product:views:bowtie42 alice bob
+
+# Add one new member and one existing member.
+SADD product:views:bowtie42 eve alice
+
+# ------------------------------------------------------------
+# 2. Read and count members
+# ------------------------------------------------------------
+SMEMBERS product:views:bowtie42
+SCARD product:views:bowtie42
+
+# Membership checks
+SISMEMBER product:views:bowtie42 alice
+SISMEMBER product:views:bowtie42 frank
+SMISMEMBER product:views:bowtie42 alice frank eve
+
+# ------------------------------------------------------------
+# 3. Remove members
+# ------------------------------------------------------------
+SREM product:views:bowtie42 chuck dave
+SMEMBERS product:views:bowtie42
+SCARD product:views:bowtie42
+
+# Removing missing members returns 0.
+SREM product:views:bowtie42 chuck dave
+
+# ------------------------------------------------------------
+# 4. Random members
+# ------------------------------------------------------------
+SRANDMEMBER product:views:bowtie42
+SRANDMEMBER product:views:bowtie42 2
+
+# SPOP removes a random member.
+SPOP product:views:bowtie42
+SMEMBERS product:views:bowtie42
+
+# ------------------------------------------------------------
+# 5. Set operations
+# ------------------------------------------------------------
+UNLINK users:java users:spring users:backend
+
+SADD users:java alice bob dave
+SADD users:spring bob chuck dave
+
+# Union: everyone in either set
+SUNION users:java users:spring
+
+# Intersection: people in both sets
+SINTER users:java users:spring
+
+# Difference: users in Java but not Spring
+SDIFF users:java users:spring
+
+# Store the intersection in another set
+SINTERSTORE users:backend users:java users:spring
+SMEMBERS users:backend
+
+# ------------------------------------------------------------
+# 6. Move a member between sets
+# ------------------------------------------------------------
+UNLINK queue:waiting queue:processing
+SADD queue:waiting job-101 job-102 job-103
+SMOVE queue:waiting queue:processing job-101
+SMEMBERS queue:waiting
+SMEMBERS queue:processing
+
+# ------------------------------------------------------------
+# 7. Clean up
+# ------------------------------------------------------------
+UNLINK product:views:bowtie42 users:java users:spring users:backend queue:waiting queue:processing

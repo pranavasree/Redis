@@ -1,0 +1,13 @@
+README.md
+lesson-06-lab-commands.txt
+lesson-06-expected-results.md
+MANIFEST.txt
+images/00-cover-build-with-sets.png
+images/01-learning-objectives.png
+images/02-redis-set-definition.png
+images/03-sadd-add-members.png
+images/04-srem-remove-members.png
+images/05-set-operations.png
+images/06-set-use-cases.png
+images/07-more-set-operations.png
+images/08-key-takeaways.png
