@@ -1,0 +1,15 @@
+README.md
+lesson-05-lab-commands.txt
+lesson-05-expected-results.md
+MANIFEST.txt
+images/00-cover-build-with-lists.png
+images/01-learning-objectives.png
+images/02-redis-list-definition.png
+images/03-lists-in-programming-languages.png
+images/04-lpush-rpop-queue.png
+images/05-list-head-and-tail.png
+images/06-rpush-lpop-stack.png
+images/07-positive-and-negative-indexes.png
+images/08-list-use-cases.png
+images/09-more-list-operations.png
+images/10-key-takeaways.png

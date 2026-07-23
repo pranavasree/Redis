@@ -1,0 +1,59 @@
+# Redis Learning Journey
+# Lesson 5: Build with Lists
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+
+PING
+
+# Alice: FIFO queue with LPUSH + RPOP
+UNLINK products:recent:alice
+LPUSH products:recent:alice BOWTIE42
+LPUSH products:recent:alice BOLOTIE23
+LPUSH products:recent:alice ASCOT13
+LLEN products:recent:alice
+LRANGE products:recent:alice 0 -1
+RPOP products:recent:alice
+RPOP products:recent:alice
+RPOP products:recent:alice
+RPOP products:recent:alice
+
+# Bob: list ranges and indexes
+UNLINK products:recent:bob
+LPUSH products:recent:bob BOWTIE42RED
+LPUSH products:recent:bob BOWTIE23GRN
+LPUSH products:recent:bob BOWTIE13BLU
+LPUSH products:recent:bob BOLOTIE52
+LPUSH products:recent:bob ASCOT12
+LLEN products:recent:bob
+LRANGE products:recent:bob 0 2
+LRANGE products:recent:bob 1 3
+LRANGE products:recent:bob 2 5
+LRANGE products:recent:bob -3 -1
+LRANGE products:recent:bob 0 -1
+LINDEX products:recent:bob 0
+LINDEX products:recent:bob -1
+
+# Additional queue practice: RPUSH + LPOP
+UNLINK jobs:email
+RPUSH jobs:email job-101 job-102 job-103
+LPOP jobs:email
+LPOP jobs:email
+LRANGE jobs:email 0 -1
+
+# Additional stack practice: LPUSH + LPOP
+UNLINK browser:history
+LPUSH browser:history /home
+LPUSH browser:history /products
+LPUSH browser:history /products/42
+LPOP browser:history
+LPOP browser:history
+LRANGE browser:history 0 -1
+
+# Keep only the latest 3 elements
+UNLINK products:recent:demo
+LPUSH products:recent:demo p1 p2 p3 p4 p5
+LTRIM products:recent:demo 0 2
+LRANGE products:recent:demo 0 -1
+
+# Clean up
+UNLINK products:recent:alice products:recent:bob jobs:email browser:history products:recent:demo
