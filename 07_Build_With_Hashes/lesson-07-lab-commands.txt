@@ -1,0 +1,112 @@
+# Redis Learning Journey
+# Lesson 7: Build with Hashes
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+
+# ------------------------------------------------------------
+# 0. Verify the connection
+# ------------------------------------------------------------
+PING
+
+# ------------------------------------------------------------
+# 1. Start with a clean product hash
+# ------------------------------------------------------------
+UNLINK product:bowtie42
+
+# ------------------------------------------------------------
+# 2. Create one field
+# ------------------------------------------------------------
+HSET product:bowtie42 name "Awesome Bowtie"
+
+# Read the field
+HGET product:bowtie42 name
+
+# ------------------------------------------------------------
+# 3. Add the complete product record
+# ------------------------------------------------------------
+HSET product:bowtie42   sku BOWTIE42   name "Awesome Bowtie"   color red   description "This awesome bowtie is the same color of red as the Redis logo."   quantity 23
+
+# ------------------------------------------------------------
+# 4. Read hash data
+# ------------------------------------------------------------
+HGET product:bowtie42 name
+HMGET product:bowtie42 sku name color quantity
+HGETALL product:bowtie42
+HKEYS product:bowtie42
+HVALS product:bowtie42
+HLEN product:bowtie42
+
+# ------------------------------------------------------------
+# 5. Check whether fields exist
+# ------------------------------------------------------------
+HEXISTS product:bowtie42 sku
+HEXISTS product:bowtie42 price
+
+# ------------------------------------------------------------
+# 6. Update fields
+# ------------------------------------------------------------
+HSET product:bowtie42 color crimson
+HGET product:bowtie42 color
+
+# Update a number atomically
+HINCRBY product:bowtie42 quantity -1
+HGET product:bowtie42 quantity
+
+# Add a price and increment it as a decimal
+HSET product:bowtie42 price 24.99
+HINCRBYFLOAT product:bowtie42 price 5.00
+HGET product:bowtie42 price
+
+# ------------------------------------------------------------
+# 7. Set a field only when it does not exist
+# ------------------------------------------------------------
+HSETNX product:bowtie42 createdBy lesson-07
+HSETNX product:bowtie42 createdBy another-value
+HGET product:bowtie42 createdBy
+
+# ------------------------------------------------------------
+# 8. Return random fields
+# ------------------------------------------------------------
+HRANDFIELD product:bowtie42
+HRANDFIELD product:bowtie42 2
+HRANDFIELD product:bowtie42 2 WITHVALUES
+
+# ------------------------------------------------------------
+# 9. Remove a field
+# ------------------------------------------------------------
+HDEL product:bowtie42 color
+HEXISTS product:bowtie42 color
+HDEL product:bowtie42 color
+
+# ------------------------------------------------------------
+# 10. Iterate through a hash
+# ------------------------------------------------------------
+HSCAN product:bowtie42 0 COUNT 10
+
+# ------------------------------------------------------------
+# 11. Add key-level expiration for temporary data
+# ------------------------------------------------------------
+EXPIRE product:bowtie42 3600
+TTL product:bowtie42
+
+# Remove expiration so the remaining lab can be reviewed later
+PERSIST product:bowtie42
+TTL product:bowtie42
+
+# ------------------------------------------------------------
+# 12. View the final record
+# ------------------------------------------------------------
+HGETALL product:bowtie42
+HLEN product:bowtie42
+
+# ------------------------------------------------------------
+# 13. Additional profile example
+# ------------------------------------------------------------
+UNLINK user:101:profile
+HSET user:101:profile   name "Hero"   role "Backend Developer"   language Java   framework "Spring Boot"
+HGETALL user:101:profile
+
+# ------------------------------------------------------------
+# 14. Clean up when finished
+# ------------------------------------------------------------
+UNLINK product:bowtie42 user:101:profile
