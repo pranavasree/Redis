@@ -1,0 +1,213 @@
+# Redis Learning Journey
+# Lesson 12: Explore Redis Use Cases
+#
+# This lesson contains four independent mini-labs:
+# 1. Enterprise caching
+# 2. Search and query
+# 3. Session management
+# 4. Recommendations and vector-search preparation
+#
+# Run one section at a time in Redis Insight CLI or redis-cli.
+# Search and vector commands require Redis Search support.
+
+# ============================================================
+# 0. Verify the connection
+# ============================================================
+PING
+
+# ============================================================
+# 1. Enterprise caching: cache-aside basics
+# ============================================================
+UNLINK cache:product:42
+
+# Cache miss
+GET cache:product:42
+
+# Pretend the application loaded this record from PostgreSQL.
+SET cache:product:42 \
+  '{"id":42,"name":"Blue Silk Bow Tie","price":30.00,"city":"Chicago"}' \
+  EX 300
+
+# Cache hit
+GET cache:product:42
+TTL cache:product:42
+
+# Update the source-of-truth database, then invalidate the cache.
+UNLINK cache:product:42
+GET cache:product:42
+
+# Re-cache the fresh version.
+SET cache:product:42 \
+  '{"id":42,"name":"Blue Silk Bow Tie","price":29.00,"city":"Chicago"}' \
+  EX 300
+
+# ============================================================
+# 2. Cache stampede protection pattern
+# The lock is illustrative. Production lock release must verify
+# ownership before deleting the key.
+# ============================================================
+UNLINK lock:cache:product:42
+
+SET lock:cache:product:42 worker-1 NX PX 5000
+PTTL lock:cache:product:42
+
+# A second worker should not acquire the same lock while it exists.
+SET lock:cache:product:42 worker-2 NX PX 5000
+
+# Demo-only release:
+UNLINK lock:cache:product:42
+
+# ============================================================
+# 3. Search and query using hash documents
+# Requires FT.CREATE / FT.SEARCH support.
+# ============================================================
+COMMAND INFO FT.CREATE
+COMMAND INFO FT.SEARCH
+
+# Clean previous data.
+UNLINK catalog:product:1 catalog:product:2 catalog:product:3
+# FT.DROPINDEX idx:catalog DD
+# Run the above manually only when the index already exists.
+
+HSET catalog:product:1 \
+  name "Red Polka Dot Bow Tie" \
+  sku 291059 \
+  price 25 \
+  city Chicago \
+  color red \
+  pattern polka-dot
+
+HSET catalog:product:2 \
+  name "Blue Silk Blend Bow Tie" \
+  sku 291060 \
+  price 30 \
+  city Chicago \
+  color blue \
+  pattern solid
+
+HSET catalog:product:3 \
+  name "Purple Formal Bow Tie" \
+  sku 291061 \
+  price 45 \
+  city Denver \
+  color purple \
+  pattern solid
+
+FT.CREATE idx:catalog ON HASH PREFIX 1 catalog:product: SCHEMA \
+  name TEXT WEIGHT 2.0 \
+  sku TAG \
+  price NUMERIC SORTABLE \
+  city TAG \
+  color TAG \
+  pattern TAG
+
+# Text search
+FT.SEARCH idx:catalog 'bow tie'
+
+# Identifier search
+FT.SEARCH idx:catalog '@sku:{291059}'
+
+# Numeric range search
+FT.SEARCH idx:catalog '@price:[10 30]' SORTBY price ASC
+
+# Location/tag search
+FT.SEARCH idx:catalog '@city:{Chicago}'
+
+# Combined multi-factor search
+FT.SEARCH idx:catalog \
+  '@name:(red polka dot) @price:[10 30] @city:{Chicago}' \
+  RETURN 6 name sku price city color pattern
+
+# Inspect the index.
+FT.INFO idx:catalog
+
+# ============================================================
+# 4. Session management with a Redis hash and TTL
+# ============================================================
+UNLINK session:shop:abc123
+
+HSET session:shop:abc123 \
+  userId user-101 \
+  cartItemCount 3 \
+  cartItems '["product:1","product:1","product:1"]' \
+  lastPage /bowties/red
+
+EXPIRE session:shop:abc123 1800
+
+HGETALL session:shop:abc123
+TTL session:shop:abc123
+
+# User returns and adds another item.
+HINCRBY session:shop:abc123 cartItemCount 1
+HSET session:shop:abc123 lastPage /checkout
+
+# Sliding-session refresh.
+EXPIRE session:shop:abc123 1800
+
+HGET session:shop:abc123 cartItemCount
+HGET session:shop:abc123 lastPage
+TTL session:shop:abc123
+
+# ============================================================
+# 5. A simple non-vector recommendation baseline
+# Sorted sets are useful before or alongside vector search.
+# ============================================================
+UNLINK recommendations:user:101
+
+ZADD recommendations:user:101 \
+  0.98 catalog:product:2 \
+  0.84 catalog:product:1 \
+  0.71 catalog:product:3
+
+ZREVRANGE recommendations:user:101 0 2 WITHSCORES
+
+# ============================================================
+# 6. Vector-search capability check and command outline
+# Real vectors are binary floating-point arrays and are normally
+# created and sent by application code.
+# ============================================================
+COMMAND INFO FT.CREATE
+COMMAND INFO FT.SEARCH
+
+# Example schema only — do not run until:
+# - Redis Search is available
+# - DIM matches your embedding model
+# - Your application can send FLOAT32 binary blobs
+#
+# FT.CREATE idx:product-vectors ON HASH PREFIX 1 vector:product: SCHEMA
+#   description TEXT
+#   price NUMERIC
+#   embedding VECTOR HNSW 6
+#     TYPE FLOAT32
+#     DIM 4
+#     DISTANCE_METRIC COSINE
+#
+# HSET vector:product:42
+#   description "Blue silk blend bow tie"
+#   price 30
+#   embedding <FLOAT32_BINARY_BLOB>
+#
+# FT.SEARCH idx:product-vectors
+#   "*=>[KNN 3 @embedding $queryVector AS vectorDistance]"
+#   PARAMS 2 queryVector <FLOAT32_BINARY_BLOB>
+#   SORTBY vectorDistance
+#   RETURN 3 description price vectorDistance
+#   DIALECT 2
+
+# ============================================================
+# 7. Combined online-shopping flow inspection
+# ============================================================
+GET cache:product:42
+FT.SEARCH idx:catalog '@city:{Chicago} @price:[0 40]' SORTBY price ASC
+HGETALL session:shop:abc123
+ZREVRANGE recommendations:user:101 0 2 WITHSCORES
+
+# ============================================================
+# 8. Clean up
+# ============================================================
+UNLINK cache:product:42 lock:cache:product:42
+UNLINK session:shop:abc123 recommendations:user:101
+UNLINK catalog:product:1 catalog:product:2 catalog:product:3
+
+# Drop the search index after the lab when it exists:
+# FT.DROPINDEX idx:catalog
