@@ -1,0 +1,175 @@
+# Redis Learning Journey
+# Lesson 11: Use Key Expiration
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+
+# ============================================================
+# 0. Verify the connection
+# ============================================================
+PING
+
+# ============================================================
+# 1. Set a key and give it a 60-second TTL
+# ============================================================
+UNLINK bowtie:color
+
+SET bowtie:color red
+EXPIRE bowtie:color 60
+TTL bowtie:color
+
+# Check that the value still exists before expiration.
+GET bowtie:color
+
+# Wait until the TTL reaches zero, then run:
+GET bowtie:color
+TTL bowtie:color
+
+# ============================================================
+# 2. Persistent key behavior
+# ============================================================
+UNLINK bowtie:pattern
+
+SET bowtie:pattern striped
+TTL bowtie:pattern
+
+# Expected TTL: -1 because the key exists without expiration.
+
+# ============================================================
+# 3. Missing key behavior
+# ============================================================
+TTL bowtie:missing
+
+# Expected TTL: -2 because the key does not exist.
+
+# ============================================================
+# 4. Set an absolute expiration time
+# 4481067600 = 2112-01-01 05:00:00 UTC
+# ============================================================
+EXPIREAT bowtie:pattern 4481067600
+EXPIRETIME bowtie:pattern
+TTL bowtie:pattern
+
+# ============================================================
+# 5. Remove expiration and make the key persistent
+# ============================================================
+PERSIST bowtie:pattern
+TTL bowtie:pattern
+EXPIRETIME bowtie:pattern
+
+# ============================================================
+# 6. Set value and expiration atomically
+# ============================================================
+UNLINK session:abc123 cache:product:42
+
+SET session:abc123 "user-101" EX 60
+TTL session:abc123
+
+SET cache:product:42 '{"id":42,"name":"Awesome Bowtie"}' PX 5000
+PTTL cache:product:42
+
+# ============================================================
+# 7. Millisecond expiration
+# ============================================================
+PEXPIRE session:abc123 30000
+PTTL session:abc123
+
+# ============================================================
+# 8. Conditional expiration options
+# Requires Redis 7.0 or later.
+# ============================================================
+UNLINK lesson:conditional
+SET lesson:conditional value
+
+# NX: set expiration only if the key currently has no expiration.
+EXPIRE lesson:conditional 60 NX
+EXPIRE lesson:conditional 120 NX
+
+# XX: set expiration only if the key already has an expiration.
+EXPIRE lesson:conditional 120 XX
+
+# GT: update only if the new TTL is greater than the existing TTL.
+EXPIRE lesson:conditional 180 GT
+EXPIRE lesson:conditional 30 GT
+
+# LT: update only if the new TTL is less than the existing TTL.
+EXPIRE lesson:conditional 30 LT
+
+TTL lesson:conditional
+
+# ============================================================
+# 9. Understand what happens when a value is replaced
+# ============================================================
+UNLINK lesson:replace
+SET lesson:replace first EX 120
+TTL lesson:replace
+
+# A normal SET replaces the value and removes the existing TTL.
+SET lesson:replace second
+TTL lesson:replace
+
+# KEEPTTL preserves the current TTL during replacement.
+EXPIRE lesson:replace 120
+SET lesson:replace third KEEPTTL
+TTL lesson:replace
+
+# ============================================================
+# 10. Commands that change data without replacing the key
+# usually preserve the key TTL.
+# ============================================================
+UNLINK counter:views profile:user:101 queue:jobs
+
+SET counter:views 1 EX 120
+INCR counter:views
+TTL counter:views
+
+HSET profile:user:101 name Hero
+EXPIRE profile:user:101 120
+HSET profile:user:101 role "Backend Developer"
+TTL profile:user:101
+
+LPUSH queue:jobs job-101
+EXPIRE queue:jobs 120
+LPUSH queue:jobs job-102
+TTL queue:jobs
+
+# ============================================================
+# 11. GETEX: read a string and change expiration atomically
+# ============================================================
+UNLINK token:reset
+SET token:reset abc-def
+
+GETEX token:reset EX 60
+TTL token:reset
+
+GETEX token:reset PERSIST
+TTL token:reset
+
+# ============================================================
+# 12. EXPIRETIME return values
+# ============================================================
+EXPIRETIME token:reset
+EXPIRETIME key:that:does:not:exist
+
+# Expected:
+# -1 -> key exists but is persistent
+# -2 -> key does not exist
+
+# ============================================================
+# 13. A short expiration demonstration
+# ============================================================
+UNLINK demo:short
+SET demo:short "I disappear soon" EX 5
+TTL demo:short
+
+# Wait approximately 6 seconds, then run:
+GET demo:short
+TTL demo:short
+
+# ============================================================
+# 14. Clean up
+# ============================================================
+UNLINK bowtie:color bowtie:pattern
+UNLINK session:abc123 cache:product:42
+UNLINK lesson:conditional lesson:replace
+UNLINK counter:views profile:user:101 queue:jobs
+UNLINK token:reset demo:short

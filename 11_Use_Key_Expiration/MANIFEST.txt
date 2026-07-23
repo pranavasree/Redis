@@ -1,0 +1,14 @@
+README.md
+lesson-11-lab-commands.txt
+lesson-11-expected-results.md
+MANIFEST.txt
+images/00-cover-use-key-expiration.png
+images/01-learning-objectives.png
+images/02-two-types-of-keys.png
+images/03-persistent-vs-volatile-keys.png
+images/04-ttl-command.png
+images/05-expire-command.png
+images/06-expiration-time-vs-ttl.png
+images/07-expireat-and-expiretime.png
+images/08-volatile-key-use-cases.png
+images/09-key-takeaways.png
