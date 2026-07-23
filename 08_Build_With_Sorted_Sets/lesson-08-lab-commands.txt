@@ -1,0 +1,84 @@
+# Redis Learning Journey
+# Lesson 8: Build with Sorted Sets
+#
+# Run these commands in Redis Insight CLI or redis-cli.
+
+# ------------------------------------------------------------
+# 0. Verify connection
+# ------------------------------------------------------------
+PING
+
+# ------------------------------------------------------------
+# 1. Start clean
+# ------------------------------------------------------------
+UNLINK product:rank
+
+# ------------------------------------------------------------
+# 2. Add members with scores
+# ------------------------------------------------------------
+ZADD product:rank 4.5 BOWTIE42
+ZADD product:rank 4.8 BOLOTIE23 3.2 ASCOT13 4.9 BONDTIE007
+
+# ------------------------------------------------------------
+# 3. Read one score and one rank
+# ------------------------------------------------------------
+ZSCORE product:rank BOWTIE42
+ZRANK product:rank BOWTIE42
+
+# ------------------------------------------------------------
+# 4. Update a score
+# ------------------------------------------------------------
+ZADD product:rank 2.0 BOWTIE42
+ZSCORE product:rank BOWTIE42
+ZRANK product:rank BOWTIE42
+
+# ------------------------------------------------------------
+# 5. Get ranges by rank
+# ------------------------------------------------------------
+ZRANGE product:rank 0 -1 WITHSCORES
+ZRANGE product:rank 0 1 WITHSCORES
+ZREVRANGE product:rank 0 1 WITHSCORES
+
+# ------------------------------------------------------------
+# 6. Get ranges by score
+# ------------------------------------------------------------
+ZRANGE product:rank 4 5 BYSCORE WITHSCORES
+ZRANGE product:rank 2 4 BYSCORE WITHSCORES
+
+# ------------------------------------------------------------
+# 7. Reverse rank and cardinality
+# ------------------------------------------------------------
+ZREVRANK product:rank BONDTIE007
+ZCARD product:rank
+
+# ------------------------------------------------------------
+# 8. Increment a score
+# ------------------------------------------------------------
+ZINCRBY product:rank 0.3 BOLOTIE23
+ZSCORE product:rank BOLOTIE23
+
+# ------------------------------------------------------------
+# 9. Count members in a score range
+# ------------------------------------------------------------
+ZCOUNT product:rank 4 5
+
+# ------------------------------------------------------------
+# 10. Remove a member
+# ------------------------------------------------------------
+ZREM product:rank ASCOT13
+ZRANGE product:rank 0 -1 WITHSCORES
+
+# ------------------------------------------------------------
+# 11. Secondary practice set for union/intersection
+# ------------------------------------------------------------
+UNLINK product:rank:week1 product:rank:week2
+ZADD product:rank:week1 5.2 speaker 5.9 code 6.2 doc 7.2 image
+ZADD product:rank:week2 2.2 speaker 3.7 plaintext 4.2 image 4.3 json
+
+ZUNION 2 product:rank:week1 product:rank:week2 WITHSCORES
+ZINTER 2 product:rank:week1 product:rank:week2 WITHSCORES
+
+# ------------------------------------------------------------
+# 12. Clean up
+# ------------------------------------------------------------
+UNLINK product:rank product:rank:week1 product:rank:week2

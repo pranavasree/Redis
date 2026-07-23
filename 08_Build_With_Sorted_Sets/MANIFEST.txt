@@ -1,0 +1,14 @@
+README.md
+lesson-08-lab-commands.txt
+lesson-08-expected-results.md
+MANIFEST.txt
+images/00-cover-build-with-sorted-sets.png
+images/01-learning-objectives.png
+images/02-sorted-set-definition.png
+images/03-sorted-set-with-scores.png
+images/04-manipulating-sorted-sets-with-commands.png
+images/05-sorted-set-union-example.png
+images/06-sorted-set-intersection-example.png
+images/07-use-cases-for-sorted-sets.png
+images/08-what-else-can-you-do.png
+images/09-key-takeaways.png
